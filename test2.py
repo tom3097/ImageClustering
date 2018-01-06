@@ -12,7 +12,7 @@ for i in xrange(20):
 
 #print data
 
-kmeans2 = KMeans2(4, 300)
+kmeans2 = KMeans2(4, 30, 100)
 clusters, centers = kmeans2(data)
 print clusters, centers
 
@@ -29,3 +29,5 @@ print points
 
 points = np.array([data[j] for j in xrange(len(data)) if clusters[j] == 3])
 print points
+
+print kmeans2.sum_similarities_
