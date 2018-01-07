@@ -7,6 +7,31 @@ from peakutils.plot import plot as pplot
 
 from sklearn.cluster import KMeans
 
+
+from clustering import KMeans2
+
+rng = np.random.RandomState(2)
+data = []
+for i in xrange(20):
+    d = [rng.random_integers(0, 255, 1), rng.random_integers(0, 255, 1), rng.random_integers(0, 255, 1)]
+    data.append(d)
+
+print data
+
+kmeans2 = KMeans2(4, 300)
+clusters, centers = kmeans2(data)
+print clusters, centers
+
+
+
+
+
+
+
+
+
+
+
 X = np.array([[1, 2], [1, 4], [1, 0], [4, 2], [4, 4], [4, 0]])
 kmeans = KMeans(n_clusters=2, random_state=0).fit(X)
 print kmeans.labels_
@@ -40,6 +65,11 @@ plt.show()
 indexes = peakutils.indexes(y)
 #print(indexes)
 #print(x[indexes], y[indexes])
+
+
+
+
+
 
 plt.figure(figsize=(10,8))
 plt.subplot(311)                             #plot in the first cell

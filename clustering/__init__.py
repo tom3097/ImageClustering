@@ -1,1 +1,1 @@
-from k_means import KMeans2
+from k_means import LocalHistogramKMeans
