@@ -190,9 +190,7 @@ class LocalHistogramKMeans(object):
         return np.any(np.abs(prev_similarities_sorted - similarities_sorted) > self.__tol)
 
     def __update_best_solution(self):
-        #print  self.sum_similarities_
         """Updates the best solution if a new solution is better than previous ones."""
-        #print self.__best_sum_similarities
         if self.__best_sum_similarities is None or self.__best_sum_similarities < self.sum_similarities_:
             self.__best_labels = np.copy(self.labels_)
             self.__best_cluster_centers = np.copy(self.cluster_centers_)
@@ -211,14 +209,12 @@ class LocalHistogramKMeans(object):
         self.__global_reset()
         for i in xrange(self.__n_init):
             self.__local_reset()
-
             if self.__init == 'k-means++':
                 self.__kmeans_pp_init(data)
             elif self.__init == 'random':
                 self.__random_init(data)
             else:
                 raise ValueError('n_init: Inappropriate initialization method')
-
             for iteration in xrange(self.__max_iter):
                 self.__assign_labels(data)
                 self.__update_centers(data)
@@ -227,5 +223,4 @@ class LocalHistogramKMeans(object):
                     break
                 self.__prev_similarities = np.copy(self.similarities_)
             self.__update_best_solution()
-
         self.__load_best_solution()
