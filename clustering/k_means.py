@@ -12,7 +12,7 @@ import math
  #   pass
 
 class KMeans2(object):
-    def __init__(self, n_clusters, n_iter, n_init):
+    def __init__(self, n_clusters, n_iter, n_init, tol):
         self.n_clusters = n_clusters
         self.n_iter = n_iter
         self.n_init = n_init
@@ -21,6 +21,11 @@ class KMeans2(object):
         self.cluster_centers_ = None
         self.similarities_ = np.zeros(n_clusters, dtype=float)
         self.sum_similarities_ = None
+
+        self.prev_sum = None
+        self.prev_similarities = None
+
+        self.tol = tol
 
         self.prev_labels = None
         self.prev_centers = None
@@ -71,7 +76,11 @@ class KMeans2(object):
 
     def calculate_value_similarity(self, v_q, v_t):
         d = v_q - v_t
+        #print '---'
+        #print v_q
+        #print v_t
         #print d
+        #print '---'
         #print '----'
         k = np.absolute(d)
         f = k / 256.0
@@ -100,20 +109,25 @@ class KMeans2(object):
         #s = data - centroids
         #print s
         #print '------------'
-        #print data.shape
-        hue = data[range(data.shape[0]), :, 0]
-        sat = data[range(data.shape[0]), :, 1]
-        val = data[range(data.shape[0]), :, 2]
+        #print data[range(data.shape[0]), :, :, 0]
+        hue = data[range(data.shape[0]), :, :, 0]
+        sat = data[range(data.shape[0]), :, :, 1]
+        val = data[range(data.shape[0]), :, :, 2]
         #print hue
         #print centroids
-        h_centroids = centroids[range(centroids.shape[0]), 0]
-        s_centroids = centroids[range(centroids.shape[0]), 1]
-        v_centroids = centroids[range(centroids.shape[0]), 2]
+        #print 'HCEN'
+        #print centroids
+        h_centroids = centroids[range(centroids.shape[0]), :, 0]
+        s_centroids = centroids[range(centroids.shape[0]), :, 1]
+        v_centroids = centroids[range(centroids.shape[0]), :, 2]
+        #print 'HCEN'
         #print h_centroids
 
         hh = self.calculate_hue_similarity(hue, h_centroids)
+        #print hh
         ss = self.calculate_saturation_similarity(sat, s_centroids)
         vv = self.calculate_value_similarity(val, v_centroids)
+        #print vv
         #print '--------'
         a = 2.5
         b = 0.5
@@ -122,6 +136,7 @@ class KMeans2(object):
         mianowniek = 1.0 + a * hh + b * ss + c * vv
         #print 'Mianownek'
         wynik = licznik / mianowniek
+        #print wynik
         return wynik
 
 
@@ -146,10 +161,17 @@ class KMeans2(object):
 
         #centroids = centroids[:, np.newaxis, :]
 
-
+        #print self.cluster_centers_.shape[0]
         while self.cluster_centers_.shape[0] < self.n_clusters:
             #print 'DUPA'
             custom_distances = self.cal_distances(ext_data, self.cluster_centers_)
+            #print custom_distances
+            # tu suma ogolna
+
+            a = np.mean(custom_distances, axis=2)
+            #print a
+            custom_distances = a
+
             #print 'Custom'
             #print custom_distances
             self.labels_ = np.argmax(custom_distances, axis=1)
@@ -177,28 +199,81 @@ class KMeans2(object):
     # j_val = sumujemy te najmniejsze dystanse - pomocnicza wartosc
 
 
-
+    def handle_empty_labels2(self, data):
+        correct = False
+        while correct is False:
+            correct = True
+            self.__assign_labels(data)
+            for i in xrange(self.n_clusters):
+                if i not in self.labels_:
+                    self.cluster_centers_[i] = data[self.rng.random_integers(0, len(data) - 1, 1)]
+                    correct = False
+                    print 'Handle empty %s' % i
+                    break
 
 
     def __assign_labels(self, data):
         ext_data = data[:, np.newaxis, :]
         custom_distances = self.cal_distances(ext_data, self.cluster_centers_)
+        #print custom_distances
+        custom_distances = np.mean(custom_distances, axis=2)
         self.labels_ = np.argmax(custom_distances, axis=1)
+        res = np.isin(range(self.n_clusters), self.labels_)
+        while not np.all(res):
+            print 'Handling empty'
+            self.cluster_centers_[res] = data[self.rng.random_integers(0, len(data) - 1, np.sum(res))]
+            custom_distances = self.cal_distances(ext_data, self.cluster_centers_)
+            custom_distances = np.mean(custom_distances, axis=2)
+            self.labels_ = np.argmax(custom_distances, axis=1)
+            res = np.isin(range(self.n_clusters), self.labels_)
+
         #print custom_distances
         #print self.labels_
+
+    def handle_empty_cluster(self, index, data):
+        self.cluster_centers_[index] = data[self.rng.random_integers(0, len(data) - 1, 1)]
+        # sprawdz czy nadal jest jakis pusty
+        last_empty = index
+        empty_clusters = True
+        while empty_clusters:
+            #print 'Handling empt2222y %s' % last_empty
+            empty_clusters = False
+            # przyporzadkuj od nowa labelki
+            self.__assign_labels(data)
+            for i in xrange(self.n_clusters):
+                points = np.array([data[j] for j in xrange(len(data)) if self.labels_[j] == i])
+                if points.size == 0:
+                    self.cluster_centers_[i] = data[self.rng.random_integers(0, len(data) - 1, 1)]
+                    empty_clusters = True
+                    last_empty = i
+                    break
 
 
 
     def __update_centers(self, data):
         for i in xrange(self.n_clusters):
+            #print self.labels_
             points = np.array([data[j] for j in xrange(len(data)) if self.labels_[j] == i])
             #print 'points'
             #print points
             if points.size > 0:
+                #print points
+                #print '---'
+                #print self.cluster_centers_[i]
+                #print '----AAA'
                 self.cluster_centers_[i] = np.mean(points, axis=0)
                 #print self.cluster_centers_[i]
+                #print '---'
+                #print self.cluster_centers_[i]
             else:
-                self.cluster_centers_[i] = data[self.rng.random_integers(0, len(data)-1, 1)]
+                #print 'WTF'
+                exit()
+                #self.handle_empty_cluster(i, data)
+                #self.cluster_centers_[i] = data[self.rng.random_integers(0, len(data)-1, 1)]
+                # pusty klaster -> dodanie nowego nie pogorszy jakosci
+                # po dodaniu od nowa trzeba przyporzadkowac labelki -> robimy to do moementu,
+                # az po przyporzadkowaniu wszystko jest ok
+                #self.handle_empty_cluster()
 
 
     def __update_similarities(self, data):
@@ -207,24 +282,24 @@ class KMeans2(object):
             mm = None
             #print '-----------777----'
             #print points
-            if points.size == 0:
-                mm = 0.0
-                # tu chyba jakis nan by sie przydal
-            else:
-                points_ext = points[:, np.newaxis, :]
-                #print self.cluster_centers_
-                bb =  self.cluster_centers_[i][np.newaxis, :]
-                ##print bb
-                custom_distances = self.cal_distances(points_ext, bb)
-                #print custom_distances
-                #print '----------777-----'
-                mm = np.mean(custom_distances)
-                #print mm
-                #print i
+            points_ext = points[:, np.newaxis, :]
+            #print self.cluster_centers_
+            bb =  self.cluster_centers_[i][np.newaxis, :]
+            ##print bb
+            custom_distances = self.cal_distances(points_ext, bb)
+            custom_distances = np.mean(custom_distances, axis=2)
+            #print '---'
+            #print points
+            #print custom_distances
+            #print custom_distances
+            #print '----------777-----'
+            mm = np.mean(custom_distances)
+            #print mm
+            #print i
             #print mm
             self.similarities_[i] = mm
         self.sum_similarities_ = np.mean(self.similarities_)
-        print self.sum_similarities_
+        #print self.sum_similarities_
 
 
 
@@ -233,6 +308,25 @@ class KMeans2(object):
         """ jesli centroidy sie nie zmieniy od ostatniej rundy, to stabilized = True"""
         pass
 
+    def check_if_break(self):
+        if self.prev_similarities is None:
+            return False
+        #print self.prev_similarities
+        #print self.similarities_
+
+        prev_sort = np.sort(self.prev_similarities)
+        curr_sort = np.sort(self.similarities_)
+        #print prev_sort
+        #print curr_sort
+
+        diff_sim = np.abs(prev_sort - curr_sort)
+        #print diff_sim
+        a =  diff_sim <= self.tol
+        #print a
+        s = np.all(a)
+        #print diff_sim
+        #print s
+        return s
 
     def __call__(self, data):
 
@@ -240,6 +334,8 @@ class KMeans2(object):
         self.prev_similarity = None
         self.prev_centers = None
         self.prev_labels = None
+
+        self.prev_sum = None
 
         self.labels_ = None
         self.cluster_centers_ = None
@@ -249,18 +345,32 @@ class KMeans2(object):
         for i in xrange(self.n_init):
 
             self.k_means_pp_init(data)
+            #print self.cluster_centers_
             #centers = self.__select_initial_centers(data)
             #exit()
 
             #print self.cluster_centers_
 
-
             for iterr in xrange(self.n_iter):
                 self.__assign_labels(data)
+                #self.handle_empty_labels2(data)
                 self.__update_centers(data)
                 self.__update_similarities(data)
-                #if iterr == 300:
-                #   exit()
+
+                #if self.prev_sum is not None:
+                #    diff = np.abs(self.prev_sum - self.sum_similarities_)
+                #    if diff <= self.tol:
+                #        print 'Tolerance'
+                #        break
+                #if self.check_progress():
+                #    break
+                if self.check_if_break():
+                    print 'COCOCOCOCOCOCOCOOOCOCOCOC'
+                    break
+
+                self.prev_sum = self.sum_similarities_
+                self.prev_similarities = np.copy(self.similarities_)
+
             if self.sum_similarities_ > self.prev_sum_similarity:
                 self.prev_labels = self.labels_
                 self.prev_centers = self.cluster_centers_

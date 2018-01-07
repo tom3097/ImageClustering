@@ -2,18 +2,21 @@ from clustering import KMeans2
 import numpy as np
 
 rng = np.random.RandomState(2)
-data = np.zeros((20, 3))
 #print data
 
+s = np.zeros((50,8,3))
+for j in range(50):
+    data = np.zeros((8, 3))
+    for i in xrange(8):
+        d = [rng.random_integers(0, 255, 1), rng.random_integers(0, 255, 1), rng.random_integers(0, 255, 1)]
+        data[i] = d
+    s[j] = np.copy(data)
 
-for i in xrange(20):
-    d = [rng.random_integers(0, 255, 1), rng.random_integers(0, 255, 1), rng.random_integers(0, 255, 1)]
-    data[i] = d
-
+print s
 #print data
 
-kmeans2 = KMeans2(4, 30, 100)
-clusters, centers = kmeans2(data)
+kmeans2 = KMeans2(4, 30, 100, 1e-4)
+clusters, centers = kmeans2(s)
 print clusters, centers
 
 print '------------'
