@@ -102,6 +102,7 @@ ENV/
 
 
 .idea
-cache
+cache_normal
+cache_pca
 results_global
 *.bak
