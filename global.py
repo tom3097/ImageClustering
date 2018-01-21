@@ -7,8 +7,7 @@ import pickle
 import shutil
 import numpy as np
 import pathlib
-
-from sklearn.cluster import KMeans
+from clustering import GlobalHistogramKMeans
 
 counter = 1
 def img_to_combined_histogram(img):
@@ -94,14 +93,16 @@ def get_reduced_histograms(normal_histograms, new_dimension_num):
 
 
 def basic_kmeans(histograms, image_paths, n_clusters):
-    kmeans = KMeans(n_clusters=n_clusters).fit_predict(histograms)
-    write_results('results_global/basic/', kmeans, image_paths)
+    kmeans = GlobalHistogramKMeans(n_clusters, 'k-means++', 10, 300, 1e-4)
+    kmeans(histograms)
+    write_results('results_global/basic/', kmeans.labels_, image_paths)
 
 
 def pca_kmeans(histograms, image_paths, n_clusters):
     histograms_pca = get_reduced_histograms(histograms, 600)
-    kmeans = KMeans(n_clusters=n_clusters).fit_predict(histograms_pca)
-    write_results('results_global/pca/', kmeans, image_paths)
+    kmeans = GlobalHistogramKMeans(n_clusters, 'k-means++', 10, 300, 1e-4)
+    kmeans(histograms_pca)
+    write_results('results_global/pca/', kmeans.labels_, image_paths)
 
 
 def write_results(result_directory, kmeans, image_paths):
