@@ -9,7 +9,6 @@ import numpy as np
 import pathlib
 
 from sklearn.cluster import KMeans
-from sklearn.decomposition import PCA
 
 counter = 1
 def img_to_combined_histogram(img):
@@ -58,23 +57,39 @@ def get_histograms(images):
         with open("cache_normal", "rb") as fp:
             histograms = pickle.load(fp)
     else:
-        histograms = [img_to_combined_histogram(img) for img in images]
+        histograms = np.array([img_to_combined_histogram(img) for img in images])
         # Save histograms to not recalculate them next time
         with open("cache_normal", "wb") as fp:
             pickle.dump(histograms, fp)
     return histograms
 
 
-def get_reduced_histograms(normal_histograms):
+def get_reduced_histograms(normal_histograms, new_dimension_num):
     # Read reduced histograms from cache if it's available
     if os.path.exists("cache_pca"):
         with open("cache_pca", "rb") as fp:
             reduced_histograms = pickle.load(fp)
     else:
-        reduced_histograms = PCA(n_components='mle', svd_solver='full').fit_transform(normal_histograms)
+        original_dimension_num = normal_histograms.shape[1]
+        normal_histograms_transformed = normal_histograms.T
+        cov_mat = np.cov([normal_histograms_transformed[i, :] for i in range(0, original_dimension_num)])
+
+        # Calculate eigenvalues and eigenvectors
+        eig_val_cov, eig_vec_cov = np.linalg.eig(cov_mat)
+        eig_pairs = [(np.abs(eig_val_cov[i]), eig_vec_cov[:, i]) for i in range(original_dimension_num)]
+
+        # Sort eig_pairs by eigenvalues
+        eig_pairs.sort(key=lambda x: x[0], reverse=True)
+
+        matrix_w = np.hstack((eig_pairs[i][1].reshape(original_dimension_num, 1) for i in range(new_dimension_num)))
+
+        reduced_histograms = matrix_w.T.dot(normal_histograms_transformed).T
+        assert reduced_histograms.shape == (normal_histograms.shape[0], new_dimension_num)
+
         # Save histograms to not recalculate them next time
         with open("cache_pca", "wb") as fp:
             pickle.dump(reduced_histograms, fp)
+
     return reduced_histograms
 
 
@@ -84,7 +99,7 @@ def basic_kmeans(histograms, image_paths, n_clusters):
 
 
 def pca_kmeans(histograms, image_paths, n_clusters):
-    histograms_pca = get_reduced_histograms(histograms)
+    histograms_pca = get_reduced_histograms(histograms, 600)
     kmeans = KMeans(n_clusters=n_clusters).fit_predict(histograms_pca)
     write_results('results_global/pca/', kmeans, image_paths)
 
@@ -112,7 +127,7 @@ def main(argv):
     if n_clusters is None:
         n_clusters = 21
 
-    # basic_kmeans(histograms, image_paths, n_clusters)
+    basic_kmeans(histograms, image_paths, n_clusters)
     pca_kmeans(histograms, image_paths, n_clusters)
 
 
