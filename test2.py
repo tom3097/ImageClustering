@@ -27,7 +27,7 @@ def recursive_glob(rootdir='.', pattern='*'):
 def get_image_paths(directory):
     image_paths = []
     for filename in glob.glob(directory + '*',):
-        print filename
+        print(filename)
         if not os.path.isdir(filename):
             image_paths.append(filename)
     return image_paths
@@ -49,7 +49,7 @@ def read_images(image_paths):
 directory = '/home/tomasz/Documents/Images/'
 
 image_paths = recursive_glob(directory, '*')
-print '\n'.join(image_paths)
+print('\n'.join(image_paths))
 thefile = open('test2.txt', 'w')
 for item in image_paths:
   thefile.write("%s\n" % item)
@@ -58,7 +58,7 @@ thefile.close()
 #image_paths = get_image_paths(directory)
 images = read_images(image_paths)
 
-print "Opened images"
+print("Opened images")
 
 N = 8
 M = 8
@@ -71,11 +71,11 @@ results = np.zeros((len(images), N * M, 3))
 
 i_idx = 0
 for img in images:
-    print "Image nr: %s" % i_idx
+    print("Image nr: %s" % i_idx)
     my_image=cv2.copyMakeBorder(img, top=S, bottom=S, left=S, right=S, borderType= cv2.BORDER_CONSTANT, value=[0, 0, 0])
     hsv = cv2.cvtColor(my_image, cv2.COLOR_BGR2HSV)
     #print hsv
-    overlap_blocks = [hsv[i-S:i+32+S, j-S:j+32+S] for i in xrange(S, 256+S, 32) for j in xrange(S, 256+S, 32)]
+    overlap_blocks = [hsv[i-S:i+32+S, j-S:j+32+S] for i in range(S, 256+S, 32) for j in range(S, 256+S, 32)]
     idx = 0
     for nimg in overlap_blocks:
         h, s, v = cv2.split(nimg)
@@ -105,11 +105,11 @@ del images
 
 kmeans = LocalHistogramKMeans(20, 'k-means++', 10, 300, 1e-4)
 kmeans(results)
-print kmeans.cluster_centers_
-print kmeans.labels_
-print kmeans.sum_similarities_
+print(kmeans.cluster_centers_)
+print(kmeans.labels_)
+print(kmeans.sum_similarities_)
 
-res = zip(image_paths, kmeans.labels_)
+res = list(zip(image_paths, kmeans.labels_))
 
 thefile = open('test.txt', 'w')
 for item in res:
