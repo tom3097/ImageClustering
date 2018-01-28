@@ -6,8 +6,12 @@ Implements operations crucial to experiments and data pre-processing.
 import os
 import glob
 import random
+import shutil
+
 import numpy as np
 import pickle
+
+import pathlib
 
 from Image import Image
 
@@ -68,3 +72,11 @@ class Dataset(object):
     def get_true_labels(self):
         """ Returns true labels for images in database. """
         return np.array([l.true_label for l in self.images])
+
+    def write_results(self, result_directory, predicted_labels):
+        for calculated_label, image in zip(predicted_labels, self.images):
+            # Create directory for cluster, eg global/12 for cluster 12
+            cluster_dir = os.path.join(result_directory, str(calculated_label))
+            if not os.path.exists(cluster_dir):
+                pathlib.Path(cluster_dir).mkdir(parents=True)
+            shutil.copyfile(image.path, os.path.join(cluster_dir, os.path.basename(image.path)))
