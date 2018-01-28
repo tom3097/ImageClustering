@@ -97,7 +97,7 @@ class LocalHistogramKMeans(object):
     @staticmethod
     def __calculate_hue_distances(h_q, h_t):
         """ Calculates distances between hues. """
-        return ((np.cos(np.absolute(h_q - h_t) * 2.0 * np.pi / 256.0)) ** 2) / 2.0
+        return (1 - ((np.cos(np.absolute(h_q - h_t) * 2.0 * np.pi / 256.0)) ** 2)) / 2.0
 
     @staticmethod
     def __calculate_saturation_distances(s_q, s_t):
@@ -112,9 +112,9 @@ class LocalHistogramKMeans(object):
     @staticmethod
     def __calculate_similarities(data, cluster_centers):
         """ Calculates similarity of images. """
-        parameter_a = 2.5
-        parameter_b = 0.5
-        parameter_c = 2
+        parameter_a = 1.0
+        parameter_b = 1.0
+        parameter_c = 1.0
 
         hue_data = data[range(data.shape[0]), :, :, 0]
         saturation_data = data[range(data.shape[0]), :, :, 1]

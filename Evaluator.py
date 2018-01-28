@@ -19,6 +19,8 @@ class Evaluator(object):
 
         for i in xrange(label_no):
             indexes = [idx for idx, x in enumerate(predicted_labels) if x == i]
+            if len(indexes) == 0:
+                continue
             i_true_labels = true_labels[indexes].tolist()
             most_common = max(set(i_true_labels), key=i_true_labels.count)
             total_count += i_true_labels.count(most_common)
@@ -34,6 +36,8 @@ class Evaluator(object):
         tp = 0
         for i in xrange(label_no):
             indexes = [idx for idx, x in enumerate(predicted_labels) if x == i]
+            if len(indexes) == 0:
+                continue
 
             indexes_len = len(indexes)
             if indexes_len < 2:
