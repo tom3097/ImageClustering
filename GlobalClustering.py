@@ -1,1 +1,54 @@
 from Dataset import Dataset
+from tools import GlobalHistogramKMeans
+from tools import Pca
+from Evaluator import Evaluator
+
+root_path = '/home/tomasz/Documents/Images/'
+
+# Creating dataset
+dataset = Dataset()
+dataset.create(root_path)
+
+# Getting histogram from images.
+histograms = dataset.get_histograms()
+
+# Performing Global Histogram-Based Color Image Clustering
+globalHistogramKMeans = GlobalHistogramKMeans(21, 'k-means++', 10, 300, 1e-4, 0)
+predicted_labels = globalHistogramKMeans.fit_predict(histograms)
+
+# Adequate to sklearn's inertia_
+print "Sum distances: %s" % globalHistogramKMeans.sum_distances_
+
+true_labels = dataset.get_true_labels()
+
+# Evaluation
+purity = Evaluator.calculate_purity(true_labels, predicted_labels)
+precision, recall = Evaluator.calculate_precision_recall(true_labels, predicted_labels)
+ri = Evaluator.calculate_ri(true_labels, predicted_labels)
+
+# Show results
+print "Purity: %s" % purity
+print "Precision: %s" % precision
+print "Recall: %s" % recall
+print "Random index value: %s" % ri
+
+# Changing dimensions from 768 to 400.
+pca = Pca(400)
+reduced_histograms = pca.fit_transform(histograms)
+
+# Clustering and predicting
+predicted_labels = globalHistogramKMeans.fit_predict(reduced_histograms)
+
+# Adequate to sklearn's inertia_
+print "Sum distances: %s" % globalHistogramKMeans.sum_distances_
+
+# Evaluation
+purity = Evaluator.calculate_purity(true_labels, predicted_labels)
+precision, recall = Evaluator.calculate_precision_recall(true_labels, predicted_labels)
+ri = Evaluator.calculate_ri(true_labels, predicted_labels)
+
+# Show results
+print "Purity: %s" % purity
+print "Precision: %s" % precision
+print "Recall: %s" % recall
+print "Random index value: %s" % ri

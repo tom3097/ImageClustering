@@ -1,97 +1,92 @@
+"""
+Allows evaluation of Global Histogram-Based Color Image Clustering and
+Local Histogram-Based Color Image Clustering by calculating purity, precision,
+recall and random index.
+
+The idea comes from "Introduction to Information Retrieval":
+https://nlp.stanford.edu/IR-book/pdf/16flat.pdf
+"""
+
 import scipy.special
 
+
 class Evaluator(object):
-    def __init__(self):
-        pass
-
-    def calculate_purity(self, true_labels, predicted_labels):
-        print "Calculating purity..."
+    @staticmethod
+    def calculate_purity(true_labels, predicted_labels):
+        """ Calculates purity for clustering results. """
         label_no = max(predicted_labels) + 1
-
         total_count = 0
 
         for i in xrange(label_no):
             indexes = [idx for idx, x in enumerate(predicted_labels) if x == i]
-            tt = true_labels[indexes].tolist()
-            print tt
-            print set(tt)
-            max_count = max(set(tt), key=tt.count)
-            print max_count
-            c = tt.count(max_count)
-            print c
-            total_count += c
+            i_true_labels = true_labels[indexes].tolist()
+            most_common = max(set(i_true_labels), key=i_true_labels.count)
+            total_count += i_true_labels.count(most_common)
 
         purity = float(total_count) / len(predicted_labels)
-        print "Purity %s" % purity
+        return purity
 
-    def calculate_rand_index(self, true_labels, predicted_labels):
-        # TP - oblicz ile kazde wystepuje
-        print "Calculating random index..."
+    @staticmethod
+    def __calculate_tp_fp(true_labels, predicted_labels):
+        """ Calculates 'True positive' and 'False positive' for clustering results. """
         label_no = max(predicted_labels) + 1
-
-        x = len(predicted_labels)
-        # total negatives plus total positives must be equal total_total
-        total_total = x * (x-1) / 2
-
-        TP = 0
-
-        TP_and_FP = 0
-
+        tp_fp = 0
+        tp = 0
         for i in xrange(label_no):
             indexes = [idx for idx, x in enumerate(predicted_labels) if x == i]
-            tt = true_labels[indexes].tolist()
 
-            c = len(indexes)
-            if c < 2:
+            indexes_len = len(indexes)
+            if indexes_len < 2:
                 continue
-            TP_and_FP += scipy.special.binom(c, 2)
+            tp_fp += scipy.special.binom(indexes_len, 2)
 
-            s_tt = set(tt)
-            for e in s_tt:
-                c = tt.count(e)
-                if c < 2:
+            i_true_labels = true_labels[indexes].tolist()
+            set_i_true_labels = set(i_true_labels)
+            for label in set_i_true_labels:
+                true_labels_count = i_true_labels.count(label)
+                if true_labels_count < 2:
                     continue
-                TP += scipy.special.binom(c, 2)
+                tp += scipy.special.binom(true_labels_count, 2)
 
-        FP = TP_and_FP - TP
+        fp = tp_fp - tp
+        return [tp, fp]
 
-        total_negatives = total_total - TP_and_FP
+    @staticmethod
+    def __calculate_tp_fp_tn_fn(true_labels, predicted_labels):
+        """ Calculates 'True positive', 'False positive', 'True negative' and
+        'False negative' for clustering results. """
+        label_no = max(predicted_labels) + 1
 
-        FN = 0
+        tp_fp_tn_fn = (len(predicted_labels) * (len(predicted_labels) - 1)) / 2
+        tp, fp = Evaluator.__calculate_tp_fp(true_labels, predicted_labels)
+        tn_fn = tp_fp_tn_fn - tp - fp
+        fn = 0
 
         for i in set(true_labels):
-            d = {}
+            item_count = {}
             for j in xrange(label_no):
                 indexes = [idx for idx, x in enumerate(predicted_labels) if x == j]
-                tt = true_labels[indexes].tolist()
-                d[j] = tt.count(i)
-            print d.values()
-            val_sum = sum(d.values())
-            print val_sum
+                i_true_labels = true_labels[indexes].tolist()
+                item_count[j] = i_true_labels.count(i)
 
-            tmp_sum = 0
-
+            count_sum = sum(item_count.values())
             for j in xrange(label_no):
-                val_sum = val_sum - d[j]
-                tmp_sum = tmp_sum + (d[j] * val_sum)
+                count_sum -= item_count[j]
+                fn += item_count[j] * count_sum
 
-            FN += tmp_sum
+        tn = tn_fn - fn
+        return [tp, fp, tn, fn]
 
-        TN = total_negatives - FN
+    @staticmethod
+    def calculate_precision_recall(true_labels, predicted_labels):
+        """ Calculates precision and recall for clustering results. """
+        tp, fp, tn, fn = Evaluator.__calculate_tp_fp_tn_fn(true_labels, predicted_labels)
+        precision = float(tp) / (tp + fp)
+        recall = float(tp) / (tp + fn)
+        return [precision, recall]
 
-
-        precision = float(TP) / (TP + FP)
-        recall = float(TP) / (TP + FN)
-        RI = float(TP + TN) / (TP + FP + FN + TN)
-
-
-
-        #FN - here comes the dragon
-
-        print "TP = %s" % TP
-        print "FP = %s" % FP
-        print "TN = %s" % TN
-        print "FN = %s" % FN
-        print "Precision = %s" % precision
-        print "Recall = %s" % recall
-        print "RI = %s" % RI
+    @staticmethod
+    def calculate_ri(true_labels, predicted_labels):
+        """ Calculates random index for clustering results. """
+        tp, fp, tn, fn = Evaluator.__calculate_tp_fp_tn_fn(true_labels, predicted_labels)
+        return float(tp + tn) / (tp + fp + fn + tn)
