@@ -118,12 +118,12 @@ class LocalHistogramKMeans(object):
         parameter_b = 0.5
         parameter_c = 0.0
 
-        hue_data = data[list(range(data.shape[0])), :, :, 0]
-        saturation_data = data[list(range(data.shape[0])), :, :, 1]
-        value_data = data[list(range(data.shape[0])), :, :, 2]
-        hue_centers = cluster_centers[list(range(cluster_centers.shape[0])), :, 0]
-        saturation_centers = cluster_centers[list(range(cluster_centers.shape[0])), :, 1]
-        value_centers = cluster_centers[list(range(cluster_centers.shape[0])), :, 2]
+        hue_data = data[range(data.shape[0]), :, :, 0]
+        saturation_data = data[range(data.shape[0]), :, :, 1]
+        value_data = data[range(data.shape[0]), :, :, 2]
+        hue_centers = cluster_centers[range(cluster_centers.shape[0]), :, 0]
+        saturation_centers = cluster_centers[range(cluster_centers.shape[0]), :, 1]
+        value_centers = cluster_centers[range(cluster_centers.shape[0]), :, 2]
 
         dh = LocalHistogramKMeans.__calculate_hue_distances(hue_data, hue_centers)
         ds = LocalHistogramKMeans.__calculate_saturation_distances(saturation_data, saturation_centers)
@@ -139,7 +139,7 @@ class LocalHistogramKMeans(object):
 
     def __kmeans_pp_init(self, data):
         """Initializes cluster centers using 'k-means++' algorithm."""
-        self.cluster_centers_ = data[np.random.choice(list(range(data.shape[0])), 1), :]
+        self.cluster_centers_ = data[np.random.choice(range(data.shape[0]), 1), :]
         ext_data = data[:, np.newaxis, :]
         while self.cluster_centers_.shape[0] < self.__n_clusters:
             similarities = LocalHistogramKMeans.__calculate_similarities(ext_data, self.cluster_centers_)
@@ -149,21 +149,21 @@ class LocalHistogramKMeans(object):
             non_similarities_sum = np.sum(non_similarities)
             prob = non_similarities / non_similarities_sum
             self.cluster_centers_ = np.vstack([self.cluster_centers_, data[np.random.choice(
-                list(range(data.shape[0])), 1, p=prob), :]])
+                range(data.shape[0]), 1, p=prob), :]])
 
     def __assign_labels(self, data):
         """Assigns labels for data."""
         ext_data = data[:, np.newaxis, :]
         similarities = LocalHistogramKMeans.__calculate_similarities(ext_data, self.cluster_centers_)
         self.labels_ = np.argmax(similarities, axis=1)
-        clusters_not_empty = np.isin(list(range(self.__n_clusters)), self.labels_)
+        clusters_not_empty = np.isin(range(self.__n_clusters), self.labels_)
         while not np.all(clusters_not_empty):
             empty_clusters = np.logical_not(clusters_not_empty)
             self.cluster_centers_[empty_clusters] = data[self.random_state.random_integers(
                 0, len(data) - 1, np.sum(empty_clusters))]
             similarities = LocalHistogramKMeans.__calculate_similarities(ext_data, self.cluster_centers_)
             self.labels_ = np.argmax(similarities, axis=1)
-            clusters_not_empty = np.isin(list(range(self.__n_clusters)), self.labels_)
+            clusters_not_empty = np.isin(range(self.__n_clusters), self.labels_)
 
     def __update_centers(self, data):
         """Computes new claster centers."""
@@ -208,6 +208,7 @@ class LocalHistogramKMeans(object):
         """Performs k-means algorithm for Local Histogram-Based Color Image Clustering task."""
         self.__global_reset()
         for i in range(self.__n_init):
+            print "init %s" % i
             self.__local_reset()
             if self.__init == 'k-means++':
                 self.__kmeans_pp_init(data)
@@ -216,6 +217,7 @@ class LocalHistogramKMeans(object):
             else:
                 raise ValueError('n_init: Inappropriate initialization method')
             for iteration in range(self.__max_iter):
+                print "iteration %s" % iteration
                 self.__assign_labels(data)
                 self.__update_centers(data)
                 self.__update_similarities(data)

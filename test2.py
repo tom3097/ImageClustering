@@ -11,6 +11,8 @@ from clustering.k_means import LocalHistogramKMeans
 import shutil
 import pathlib
 
+from Dataset import Dataset
+
 
 def recursive_glob(rootdir='.', pattern='*'):
     """Search recursively for files matching a specified pattern.
@@ -47,6 +49,7 @@ def read_images(image_paths):
 #bottom= im[row-2:row, 0:col]
 #mean= cv2.mean(bottom)[0]
 directory = '/home/tomasz/Documents/Images/'
+
 
 image_paths = recursive_glob(directory, '*')
 print('\n'.join(image_paths))

@@ -1,7 +1,7 @@
 import numpy as np
 
 
-class GlobalHistogramKMeans:
+class GlobalHistogramKMeans2:
     """
     K-means clustering for Global Histogram-Based Color Image Clustering.
 
