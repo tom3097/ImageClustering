@@ -52,7 +52,7 @@ class GlobalHistogramKMeans(object):
         Distances for each cluster.
 
     sum_distances_ : float
-        Mean distances for all clusters.
+        Sum distances for all clusters.
     """
     def __init__(self, n_clusters=8, init='k-means++', n_init=10, max_iter=300,
                  tol=1e-4, random_state_seed=None):
@@ -144,8 +144,8 @@ class GlobalHistogramKMeans(object):
             ext_points = points[:, np.newaxis, :]
             cluster = self.cluster_centers_[i][np.newaxis, :]
             distances = GlobalHistogramKMeans.__calculate_distances(ext_points, cluster)
-            self.distances_[i] = np.mean(distances)
-        self.sum_distances_ = np.mean(self.distances_)
+            self.distances_[i] = np.sum(distances)
+        self.sum_distances_ = np.sum(self.distances_)
 
     def __is_progress(self):
         """ Checks whether to break the algorithm or continue. """

@@ -34,7 +34,6 @@ class Dataset(object):
             img_paths = glob.glob(path_pattern)
             imgs = [Image(path, label) for path in img_paths]
             self.images.extend(imgs)
-        random.shuffle(self.images)
 
     def partition_images(self, m=8, n=8, s=2):
         """ Partitions all images into m*n blocks. """

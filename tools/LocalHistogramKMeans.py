@@ -52,7 +52,7 @@ class LocalHistogramKMeans(object):
         Similarities for each cluster.
 
     sum_similarities_ : float
-        Mean similarities for all clusters.
+        Sum similarities for all clusters.
     """
     def __init__(self, n_clusters=8, init='k-means++', n_init=10, max_iter=300,
                  tol=1e-4, random_state_seed=None):
