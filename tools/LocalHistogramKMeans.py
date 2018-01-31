@@ -112,9 +112,9 @@ class LocalHistogramKMeans(object):
     @staticmethod
     def __calculate_similarities(data, cluster_centers):
         """ Calculates similarity of images. """
-        parameter_a = 1.0
-        parameter_b = 1.0
-        parameter_c = 1.0
+        parameter_a = 2.5
+        parameter_b = 0.5
+        parameter_c = 0.0
 
         hue_data = data[range(data.shape[0]), :, :, 0]
         saturation_data = data[range(data.shape[0]), :, :, 1]
@@ -176,8 +176,8 @@ class LocalHistogramKMeans(object):
             ext_points = points[:, np.newaxis, :]
             cluster = self.cluster_centers_[i][np.newaxis, :]
             similarities = LocalHistogramKMeans.__calculate_similarities(ext_points, cluster)
-            self.similarities_[i] = np.mean(similarities)
-        self.sum_similarities_ = np.mean(self.similarities_)
+            self.similarities_[i] = np.sum(similarities)
+        self.sum_similarities_ = np.sum(self.similarities_)
 
     def __is_progress(self):
         """ Checks whether to break the algorithm or continue. """

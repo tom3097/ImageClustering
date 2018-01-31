@@ -81,6 +81,6 @@ def main(cluster_num):
     dataset.write_results(os.path.join("results_global/", str(cluster_num), "pca"), predicted_labels)
 
 
-for i in xrange(21, 22):
+for i in xrange(15, 16):
     main(i)
     print ""
